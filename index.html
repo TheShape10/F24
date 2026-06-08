@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart F24 Automation</title>
+  <style>
+    :root {
+      --navy-950: #06182d;
+      --navy-900: #08213e;
+      --navy-800: #0c2c4f;
+      --teal-500: #24e4a4;
+      --teal-400: #67ffd0;
+      --teal-100: #dffff4;
+      --white: #ffffff;
+      --mist: #edf5f8;
+      --text-soft: #c8d8e7;
+      --ink: #09213c;
+      --muted: #52677b;
+      font-family: Aptos, "Segoe UI", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--navy-950);
+    }
+
+    body {
+      margin: 0;
+      color: var(--white);
+      background:
+        radial-gradient(circle at 78% 6%, rgba(36, 228, 164, 0.22), transparent 28%),
+        radial-gradient(circle at 18% 94%, rgba(42, 118, 170, 0.22), transparent 32%),
+        linear-gradient(135deg, var(--navy-950) 0%, var(--navy-900) 48%, #041326 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.75), transparent 78%);
+    }
+
+    .deck-nav {
+      position: fixed;
+      z-index: 20;
+      right: 34px;
+      bottom: 26px;
+      display: flex;
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+      background: rgba(6, 24, 45, 0.72);
+      box-shadow: 0 18px 45px rgba(0,0,0,0.24);
+      backdrop-filter: blur(16px);
+    }
+
+    .deck-nav a {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: var(--text-soft);
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 13px;
+      border: 1px solid transparent;
+      transition: 180ms ease;
+    }
+
+    .deck-nav a:hover,
+    .deck-nav a:focus-visible {
+      color: var(--navy-950);
+      background: var(--teal-500);
+      box-shadow: 0 0 24px rgba(36, 228, 164, 0.52);
+      outline: none;
+    }
+
+    .slide {
+      position: relative;
+      min-height: 100vh;
+      padding: 42px clamp(32px, 5vw, 72px) 46px;
+      display: flex;
+      flex-direction: column;
+      isolation: isolate;
+      page-break-after: always;
+    }
+
+    .slide::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      right: -12vw;
+      top: -15vh;
+      width: 42vw;
+      height: 42vw;
+      border-radius: 50%;
+      border: 1px solid rgba(103, 255, 208, 0.18);
+      box-shadow: inset 0 0 80px rgba(103, 255, 208, 0.08);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      min-height: 72px;
+    }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--teal-400);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .kicker::before {
+      content: "";
+      width: 34px;
+      height: 2px;
+      border-radius: 999px;
+      background: var(--teal-500);
+      box-shadow: 0 0 18px rgba(36, 228, 164, 0.9);
+    }
+
+    .logo-shell {
+      width: clamp(148px, 14vw, 202px);
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 16px 38px rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.55);
+      flex: 0 0 auto;
+    }
+
+    .brand-stack {
+      display: grid;
+      justify-items: end;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+    .logo-shell img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .bpm-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 9px 7px 13px;
+      border-radius: 999px;
+      color: var(--teal-100);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(103, 255, 208, 0.28);
+      box-shadow: 0 0 24px rgba(36, 228, 164, 0.12);
+      backdrop-filter: blur(12px);
+      font-size: 11px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .bpm-badge img {
+      display: block;
+      width: clamp(76px, 7vw, 104px);
+      height: auto;
+      border-radius: 3px;
+    }
+
+    h1 {
+      margin: 18px 0 0;
+      max-width: 940px;
+      color: var(--white);
+      font-size: clamp(42px, 5.2vw, 76px);
+      line-height: 0.96;
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 18px 0 0;
+      max-width: 870px;
+      color: var(--text-soft);
+      font-size: clamp(17px, 1.6vw, 24px);
+      line-height: 1.32;
+      font-weight: 430;
+    }
+
+    .process-wrap {
+      position: relative;
+      flex: 1;
+      display: grid;
+      align-items: center;
+      padding: clamp(28px, 5vh, 58px) 0 20px;
+    }
+
+    .process-line {
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      top: 50%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(103, 255, 208, 0.58), transparent);
+      box-shadow: 0 0 24px rgba(36, 228, 164, 0.26);
+      transform: translateY(-50%);
+    }
+
+    .process-grid {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(140px, 1fr));
+      gap: clamp(14px, 1.6vw, 22px);
+      align-items: stretch;
+    }
+
+    .step {
+      position: relative;
+      min-height: 258px;
+      padding: 22px 18px 20px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.105), rgba(255,255,255,0.045));
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 20px 54px rgba(0, 0, 0, 0.24);
+      backdrop-filter: blur(12px);
+      animation: rise 620ms ease both;
+    }
+
+    .step:nth-child(2) { animation-delay: 80ms; }
+    .step:nth-child(3) { animation-delay: 160ms; }
+    .step:nth-child(4) { animation-delay: 240ms; }
+    .step:nth-child(5) { animation-delay: 320ms; }
+
+    .step.ai {
+      background: linear-gradient(180deg, rgba(36, 228, 164, 0.20), rgba(255,255,255,0.055));
+      border-color: rgba(103, 255, 208, 0.72);
+      box-shadow: 0 0 0 1px rgba(36, 228, 164, 0.24), 0 26px 80px rgba(36, 228, 164, 0.18), 0 24px 70px rgba(0, 0, 0, 0.28);
+    }
+
+    .step::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -18px;
+      width: 28px;
+      height: 28px;
+      border-top: 2px solid rgba(103, 255, 208, 0.72);
+      border-right: 2px solid rgba(103, 255, 208, 0.72);
+      transform: translateY(-50%) rotate(45deg);
+      background: rgba(8, 33, 62, 0.86);
+      z-index: 2;
+    }
+
+    .step:last-child::after { display: none; }
+
+    .step-number {
+      color: rgba(200, 216, 231, 0.72);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: 0.16em;
+    }
+
+    .icon {
+      width: 62px;
+      height: 62px;
+      margin: 20px 0 18px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      color: var(--teal-400);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(103, 255, 208, 0.24);
+    }
+
+    .ai .icon {
+      color: var(--navy-950);
+      background: var(--teal-500);
+      box-shadow: 0 0 34px rgba(36, 228, 164, 0.70);
+      border-color: rgba(255, 255, 255, 0.42);
+    }
+
+    .icon svg,
+    .benefit-icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .step h2 {
+      margin: 0;
+      color: var(--white);
+      font-size: clamp(18px, 1.35vw, 23px);
+      line-height: 1.08;
+      font-weight: 820;
+      letter-spacing: 0;
+    }
+
+    .step p {
+      margin: 12px 0 0;
+      color: var(--text-soft);
+      font-size: clamp(13px, 0.92vw, 15px);
+      line-height: 1.36;
+    }
+
+    .callout {
+      align-self: flex-start;
+      margin-top: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 999px;
+      background: rgba(36, 228, 164, 0.12);
+      border: 1px solid rgba(103, 255, 208, 0.38);
+      color: var(--teal-100);
+      font-size: 14px;
+      font-weight: 760;
+      box-shadow: 0 0 26px rgba(36, 228, 164, 0.18);
+    }
+
+    .benefit-layout {
+      flex: 1;
+      display: grid;
+      align-content: center;
+      gap: clamp(24px, 4vh, 38px);
+      padding-top: 28px;
+    }
+
+    .benefit-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(210px, 1fr));
+      gap: 18px;
+    }
+
+    .benefit-card {
+      min-height: 158px;
+      padding: 22px 22px 20px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(239, 247, 250, 0.96));
+      color: var(--ink);
+      border: 1px solid rgba(255,255,255,0.72);
+      box-shadow: 0 20px 48px rgba(0,0,0,0.22);
+      animation: rise 620ms ease both;
+    }
+
+    .benefit-card:nth-child(2) { animation-delay: 70ms; }
+    .benefit-card:nth-child(3) { animation-delay: 140ms; }
+    .benefit-card:nth-child(4) { animation-delay: 210ms; }
+    .benefit-card:nth-child(5) { animation-delay: 280ms; }
+    .benefit-card:nth-child(6) { animation-delay: 350ms; }
+
+    .benefit-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .benefit-icon {
+      flex: 0 0 auto;
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      color: #00795c;
+      background: linear-gradient(180deg, #e4fff5, #ccf8ea);
+      border: 1px solid rgba(36, 228, 164, 0.42);
+      box-shadow: 0 0 22px rgba(36, 228, 164, 0.22);
+      font-size: 15px;
+      font-weight: 850;
+    }
+
+    .benefit-icon svg {
+      width: 25px;
+      height: 25px;
+      stroke-width: 1.9;
+    }
+
+    .benefit-card h2 {
+      margin: 0;
+      font-size: clamp(17px, 1.35vw, 22px);
+      line-height: 1.12;
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+
+    .benefit-card p {
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: clamp(13px, 1vw, 15px);
+      line-height: 1.34;
+      font-weight: 520;
+    }
+
+    .closing {
+      padding: clamp(18px, 2.2vw, 26px);
+      border-radius: 18px;
+      background: linear-gradient(90deg, rgba(36, 228, 164, 0.18), rgba(255,255,255,0.075));
+      border: 1px solid rgba(103, 255, 208, 0.38);
+      box-shadow: 0 0 42px rgba(36, 228, 164, 0.16);
+      color: var(--white);
+      text-align: center;
+      font-size: clamp(20px, 2vw, 30px);
+      line-height: 1.18;
+      font-weight: 850;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 1080px) {
+      .process-grid,
+      .benefit-grid { grid-template-columns: 1fr; }
+      .process-line,
+      .step::after { display: none; }
+      .step { min-height: auto; }
+      .slide { min-height: auto; }
+    }
+
+    @media (max-width: 720px) {
+      .slide { padding: 28px 18px 70px; }
+      .topbar { min-height: 0; }
+      .logo-shell { width: 132px; }
+      .bpm-badge { padding-left: 9px; font-size: 0; }
+      .bpm-badge img { width: 74px; }
+      .deck-nav { right: 18px; bottom: 18px; }
+    }
+
+    @media print {
+      @page { size: 16in 9in; margin: 0; }
+      body { background: var(--navy-950); }
+      .deck-nav { display: none; }
+      .slide {
+        width: 16in;
+        height: 9in;
+        min-height: 9in;
+        padding: 0.52in 0.72in;
+        break-after: page;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="deck-nav" aria-label="Navigazione presentazione">
+    <a href="#processo" aria-label="Vai alla slide processo">01</a>
+    <a href="#benefici" aria-label="Vai alla slide benefici">02</a>
+  </nav>
+
+  <main>
+    <section class="slide" id="processo">
+      <div class="topbar">
+        <div>
+          <div class="kicker">AI & Process Control</div>
+          <h1>Smart F24 Automation</h1>
+          <p class="subtitle">Dalla ricezione dell'F24 alla registrazione contabile in pochi passaggi controllati</p>
+        </div>
+        <div class="brand-stack">
+          <div class="logo-shell" aria-label="Centro Software">
+            <img src="CSW_logo.jpg" alt="Centro Software">
+          </div>
+          <div class="bpm-badge" aria-label="Implementato con BPM">
+            <span>Implemented with</span>
+            <img src="logoBPM.png" alt="BPM">
+          </div>
+        </div>
+      </div>
+
+      <div class="process-wrap">
+        <div class="process-line" aria-hidden="true"></div>
+        <div class="process-grid">
+          <article class="step">
+            <div class="step-number">01</div>
+            <div class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 6h16v11H4z"/><path d="m4 7 8 6 8-6"/><path d="M12 20v-7"/><path d="m9 16 3-3 3 3"/></svg>
+            </div>
+            <h2>Ricezione F24</h2>
+            <p>Ricezione automatica da e-mail, cartella monitorata oppure caricamento manuale</p>
+          </article>
+
+          <article class="step ai">
+            <div class="step-number">02</div>
+            <div class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M8 9a4 4 0 0 1 8 0"/><path d="M7 14a5 5 0 0 0 10 0"/><path d="M6 10H4"/><path d="M20 10h-2"/><path d="M12 3v2"/><path d="M9 18v3"/><path d="M15 18v3"/><path d="M9 12h6"/><path d="M10 15h4"/></svg>
+            </div>
+            <h2>AI Document Understanding</h2>
+            <p>L'intelligenza artificiale legge il documento ed estrae automaticamente i dati</p>
+          </article>
+
+          <article class="step">
+            <div class="step-number">03</div>
+            <div class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 5h7v14H4z"/><path d="M13 5h7v14h-7z"/><path d="m8 12 2 2 4-5"/></svg>
+            </div>
+            <h2>Validazione Operatore</h2>
+            <p>Verifica semplice con documento PDF originale e dati estratti affiancati</p>
+          </article>
+
+          <article class="step">
+            <div class="step-number">04</div>
+            <div class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5 20V8"/><path d="M19 20V8"/><path d="M3 20h18"/><path d="M6 4h12l2 4H4z"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+            </div>
+            <h2>Registrazione Automatica</h2>
+            <p>Creazione automatica della registrazione contabile in prima nota</p>
+          </article>
+
+          <article class="step">
+            <div class="step-number">05</div>
+            <div class="icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6z"/><path d="m8.5 12 2.5 2.5L16 9"/></svg>
+            </div>
+            <h2>Completamento Processo</h2>
+            <p>Processo completato con gestione automatica delle anomalie</p>
+          </article>
+        </div>
+      </div>
+
+      <div class="callout">Controllo umano prima della contabilizzazione</div>
+    </section>
+
+    <section class="slide" id="benefici">
+      <div class="topbar">
+        <div>
+          <div class="kicker">Executive Benefits</div>
+          <h1>Più velocità. Meno errori. Controllo totale.</h1>
+          <p class="subtitle">I vantaggi concreti della Smart F24 Automation</p>
+        </div>
+        <div class="brand-stack">
+          <div class="logo-shell" aria-label="Centro Software">
+            <img src="CSW_logo.jpg" alt="Centro Software">
+          </div>
+          <div class="bpm-badge" aria-label="Implementato con BPM">
+            <span>Implemented with</span>
+            <img src="logoBPM.png" alt="BPM">
+          </div>
+        </div>
+      </div>
+
+      <div class="benefit-layout">
+        <div class="benefit-grid">
+          <article class="benefit-card">
+            <div class="benefit-head">
+              <div class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.7"/><path d="M18 3v4h-4"/><path d="M20 12a8 8 0 0 1-13.7 5.7"/><path d="M6 21v-4h4"/></svg></div>
+              <h2>Riduzione attività manuali</h2>
+            </div>
+            <p>Meno operazioni ripetitive e più tempo per attività a valore</p>
+          </article>
+
+          <article class="benefit-card">
+            <div class="benefit-head">
+              <div class="benefit-icon" aria-hidden="true">AI</div>
+              <h2>Estrazione intelligente dati</h2>
+            </div>
+            <p>L'AI legge automaticamente le informazioni del modello F24</p>
+          </article>
+
+          <article class="benefit-card">
+            <div class="benefit-head">
+              <div class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 9.5 17 19 7"/><path d="M4 4h16v16H4z"/></svg></div>
+              <h2>Controllo prima della registrazione</h2>
+            </div>
+            <p>L'operatore valida i dati prima della contabilizzazione</p>
+          </article>
+
+          <article class="benefit-card">
+            <div class="benefit-head">
+              <div class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 4.3 2.8 17.2A2 2 0 0 0 4.5 20h15a2 2 0 0 0 1.7-2.8L13.7 4.3a2 2 0 0 0-3.4 0z"/></svg></div>
+              <h2>Riduzione errori</h2>
+            </div>
+            <p>Minore rischio di errori di inserimento manuale</p>
+          </article>
+
+          <article class="benefit-card">
+            <div class="benefit-head">
+              <div class="benefit-icon" aria-hidden="true">ERP</div>
+              <h2>Integrazione contabile</h2>
+            </div>
+            <p>Registrazione automatica in prima nota su SAM ERP2</p>
+          </article>
+
+          <article class="benefit-card">
+            <div class="benefit-head">
+              <div class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5v14"/><path d="M4 6h13l-2 4 2 4H4"/><path d="M9 10h4"/></svg></div>
+              <h2>Gestione anomalie</h2>
+            </div>
+            <p>Segnalazione automatica di errori o dati non validi</p>
+          </article>
+        </div>
+
+        <div class="closing">Dall'F24 alla contabilizzazione: un processo più rapido, controllato e intelligente.</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
